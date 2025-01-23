@@ -109,5 +109,29 @@ router.patch("/:id/status", authenticateToken, (req, res) => {
     });
   });
 });
+/**
+ * 할 일 삭제
+ * DELETE /todos/:id
+ * 보호된 경로: 토큰 검증 필요
+ */
+router.delete("/:id", authenticateToken, (req, res) => {
+  const { id } = req.params;
+
+  // 사용자 소유권 확인
+  const ownershipQuery = "SELECT * FROM todos WHERE id = ? AND user_id = ?";
+  db.query(ownershipQuery, [id, req.user.id], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (results.length === 0) {
+      return res.status(403).json({ error: "삭제 권한이 없습니다." });
+    }
+
+    // 할 일 삭제
+    const deleteQuery = "DELETE FROM todos WHERE id = ?";
+    db.query(deleteQuery, [id], (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ message: "할 일이 삭제되었습니다." });
+    });
+  });
+});
 
 module.exports = { todoRoutes: router };
